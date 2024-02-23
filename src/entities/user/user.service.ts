@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { genSalt, hash } from 'bcrypt';
 
 import { User } from './user.entity';
+import { UpdateUserDto } from './dto/updateUser.dto';
 
 
 @Injectable()
@@ -11,6 +12,21 @@ export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) { }
+
+  availableFields = ['email', 'firstName', 'lastName', 'birthDate', 'gender'];
+
+  // Filter body's fields from abailable fields list
+  private filterFields(body: { [k: string]: any }) {
+    const filteredBody: { [k: string]: any } = {};
+
+    Object.keys(body).filter((k) => {
+      if (this.availableFields.includes(k)) {
+        filteredBody[k] = body[k];
+      }
+    });
+
+    return filteredBody;
+  }
 
   // Register new user
   public async createUser(userData: any) {
@@ -25,8 +41,33 @@ export class UserService {
     return await this.userRepository.save(newUser);
   }
 
+  // Get all users
+  public async getAllUsers() {
+    return await this.userRepository.find({
+      select: this.availableFields as any,
+    });
+  }
+
   // Get user by id
   public async getUserData(id: number) {
-    return await this.userRepository.findOne({ where: { id } });
+    return await this.userRepository.findOne({ 
+      where: { id },
+      select: this.availableFields as any,
+    });
+  }
+
+  // Update user data
+  public async updateUserData(id: number, body: UpdateUserDto) {
+    const { email, firstName, lastName, birthDate, gender } = body;
+
+    return await this.userRepository.update(
+      { id },
+      this.filterFields(body),
+    );
+  }
+
+  // Delete user
+  public async deleteUser(id: number) {
+    return await this.userRepository.delete(id);
   }
 }

@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Patch, Put, Delete, Res, Req, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Put, Delete, Res, Req, Param, ParseIntPipe, Body } from '@nestjs/common';
 import { Response, Request } from 'express';
 
 import { UserService } from './user.service';
+import { UpdateUserDto } from './dto/updateUser.dto';
 
 @Controller('users')
 export class UserController {
@@ -14,7 +15,8 @@ export class UserController {
 		@Req() req: Request,
 		@Res() res: Response,
 	) {
-		
+		const users = await this.userService.getAllUsers();
+		return res.send({ status: 'ok', data: users });
 	}
 
 
@@ -24,12 +26,8 @@ export class UserController {
 		@Res() res: Response,
 	) {
 		const userData = await this.userService.getUserData(id);
-
-		delete userData.password;
-
 		return res.send({ status: 'ok', data: userData });
 	}
-
 
 	@Post('/')
 	async createUser(
@@ -41,29 +39,23 @@ export class UserController {
 	}
 
 
-	@Patch('/:id')
-	async updateUser(
-		@Req() req: Request,
-		@Res() res: Response,
-	) {
-
-	}
-
-
 	@Put('/:id')
 	async updateUserField(
-		@Req() req: Request,
+		@Param('id', ParseIntPipe) id: number,
+		@Body() body: UpdateUserDto,
 		@Res() res: Response,
 	) {
-
+		await this.userService.updateUserData(id, body);
+		return res.send({ status: 'ok' });
 	}
 
 
 	@Delete('/:id')
 	async deleteUser(
-		@Req() req: Request,
+		@Param('id', ParseIntPipe) id: number,
 		@Res() res: Response,
 	) {
-
+		await this.userService.deleteUser(id);
+		return res.send({ status: 'ok' });
 	}
 }
